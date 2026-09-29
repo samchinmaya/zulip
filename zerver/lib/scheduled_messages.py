@@ -1,12 +1,23 @@
+from datetime import datetime
+
+from django.utils.timezone import now as timezone_now
 from django.utils.translation import gettext as _
 
-from zerver.lib.exceptions import ResourceNotFoundError
+from zerver.lib.exceptions import DeliveryTimeNotInFutureError, ResourceNotFoundError
+from zerver.lib.timestamp import timestamp_to_datetime
 from zerver.models import ScheduledMessage, UserProfile
 from zerver.models.scheduled_jobs import (
     APIReminderDirectMessageDict,
     APIScheduledDirectMessageDict,
     APIScheduledStreamMessageDict,
 )
+
+
+def get_future_delivery_datetime(scheduled_delivery_timestamp: int) -> datetime:
+    deliver_at = timestamp_to_datetime(scheduled_delivery_timestamp)
+    if deliver_at <= timezone_now():
+        raise DeliveryTimeNotInFutureError
+    return deliver_at
 
 
 def access_scheduled_message(
