@@ -148,6 +148,10 @@ class RemindersTest(ZulipTestCase):
         result = self.do_schedule_reminder(message_id, scheduled_delivery_timestamp)
         self.assert_json_error(result, "Scheduled delivery time must be in the future.")
 
+        milliseconds_timestamp = int(time.time() * 1000)
+        result = self.do_schedule_reminder(message_id, milliseconds_timestamp)
+        self.assert_json_error(result, "Invalid scheduled delivery time.")
+
     def test_schedule_reminder_with_bad_message_id(self) -> None:
         self.login("hamlet")
         scheduled_delivery_timestamp = int(time.time() + 86400)

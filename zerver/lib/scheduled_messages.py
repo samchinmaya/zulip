@@ -3,7 +3,7 @@ from datetime import datetime
 from django.utils.timezone import now as timezone_now
 from django.utils.translation import gettext as _
 
-from zerver.lib.exceptions import DeliveryTimeNotInFutureError, ResourceNotFoundError
+from zerver.lib.exceptions import DeliveryTimeNotInFutureError, JsonableError, ResourceNotFoundError
 from zerver.lib.timestamp import timestamp_to_datetime
 from zerver.models import ScheduledMessage, UserProfile
 from zerver.models.scheduled_jobs import (
@@ -14,7 +14,11 @@ from zerver.models.scheduled_jobs import (
 
 
 def get_future_delivery_datetime(scheduled_delivery_timestamp: int) -> datetime:
-    deliver_at = timestamp_to_datetime(scheduled_delivery_timestamp)
+    try:
+        deliver_at = timestamp_to_datetime(scheduled_delivery_timestamp)
+    except (OSError, OverflowError, ValueError):
+        # datetime only supports years 1 through 9999.
+        raise JsonableError(_("Invalid scheduled delivery time."))
     if deliver_at <= timezone_now():
         raise DeliveryTimeNotInFutureError
     return deliver_at
